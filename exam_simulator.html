@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C8 — The Periodic Table — Exam Simulator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1a1a1a; line-height: 1.6; }
+  .header { background: #1a3c5e; color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+  .header h1 { font-size: 22px; }
+  .timer { font-size: 28px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .timer.warning { color: #ff9800; }
+  .timer.danger { color: #ff4444; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  .exam-info {
+    background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;
+  }
+  .exam-info .stat { display: inline-block; margin: 0 16px; }
+  .exam-info .stat-val { font-size: 24px; font-weight: 700; color: #2a5f8f; }
+  .exam-info .stat-label { font-size: 12px; color: #888; }
+  .q-card {
+    background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .q-card .q-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .q-card .q-num { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .q-card .q-marks { font-size: 12px; color: #2a5f8f; font-weight: 600; }
+  .q-card .q-text { font-size: 16px; margin-bottom: 12px; }
+  .q-card textarea {
+    width: 100%; min-height: 100px; padding: 12px; border: 2px solid #e0e0e0;
+    border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical;
+  }
+  .q-card textarea:focus { border-color: #2a5f8f; outline: none; }
+  .answer-reveal {
+    margin-top: 12px; padding: 12px 16px; background: #f0faf0;
+    border-left: 3px solid #2d8a4e; border-radius: 4px; font-size: 14px;
+    display: none; white-space: pre-wrap;
+  }
+  .answer-reveal.show { display: block; }
+  .controls { text-align: center; margin: 24px 0; }
+  .controls button {
+    padding: 12px 32px; border: none; border-radius: 8px; font-size: 16px;
+    font-weight: 600; cursor: pointer; margin: 0 8px;
+  }
+  .btn-start { background: #2a5f8f; color: white; }
+  .btn-start:hover { background: #1a3c5e; }
+  .btn-submit { background: #2d8a4e; color: white; }
+  .btn-submit:hover { background: #1d6a3e; }
+  .btn-show { background: #e0e0e0; color: #333; }
+  .btn-show:hover { background: #d0d0d0; }
+  .hidden { display: none; }
+  .results {
+    background: white; border-radius: 12px; padding: 32px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .results h2 { font-size: 28px; margin-bottom: 16px; }
+  .results .time-taken { font-size: 18px; color: #555; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>C8 — The Periodic Table — Exam Simulator</h1>
+  <div class="timer" id="timer">--:--</div>
+</div>
+<div class="container">
+  <div class="exam-info" id="examInfo">
+    <div class="stat"><div class="stat-val" id="totalQ">-</div><div class="stat-label">Questions</div></div>
+    <div class="stat"><div class="stat-val" id="totalM">-</div><div class="stat-label">Total Marks</div></div>
+    <div class="stat"><div class="stat-val" id="timeLimit">-</div><div class="stat-label">Minutes</div></div>
+    <div style="margin-top:16px;">
+      <button class="btn-start" id="btnStart" onclick="startExam()">Start Exam</button>
+    </div>
+  </div>
+  <div id="questionsArea" class="hidden"></div>
+  <div id="submitArea" class="hidden controls">
+    <button class="btn-submit" onclick="submitExam()">Submit &amp; View Answers</button>
+  </div>
+  <div id="resultsArea" class="hidden"></div>
+</div>
+<script>
+const EXAM = {"title": "C8 \u2014 The Periodic Table", "timeMinutes": 45, "questions": [{"id": "Question C8.01", "question": "What is the name of the alkali formed when potassium reacts with water?", "answer": "Potassium hydroxide (KOH).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.02", "question": "Write a word equation for the reaction between lithium and water.", "answer": "lithium + water \u2192 lithium hydroxide + hydrogen", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.03", "question": "Using the trends in Tables C8.01 and C8.02: (a) Suggest a value for the melting point of rubidium. (b) Suggest how the reactivity of rubidium with water compares with potassium.", "answer": "(a) The melting points decrease down Group I: Li = 181 \u00b0C, Na = 98 \u00b0C, K = 63 \u00b0C. The gap is getting smaller each step (~83, then ~35). Rubidium&#x27;s melting point would be about 20\u201330 \u00b0C lower than potassium, so approximately 33\u201343 \u00b0C. The actual value is 39 \u00b0C. (b) Rubidium is below potassium in Group I, so it will be more reactive. It will react even more vigorously with water than potassium \u2014 likely explosive, with an immediate flame.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.04", "question": "Which halogen(s) will displace bromine from a solution of potassium bromide?", "answer": "Only chlorine (and fluorine) will displace bromine, because they are more reactive. Iodine will NOT displace bromine because it is less reactive. Cl\u2082(aq) + 2KBr(aq) \u2192 2KCl(aq) + Br\u2082(aq).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.05", "question": "What is the similarity in the electron arrangement of the noble gases?", "answer": "All noble gases have a complete (full) outer shell of electrons. Helium has 2 electrons in its outer shell; all others (Ne, Ar, Kr, Xe, Rn) have 8 electrons in their outer shell. This stable configuration is why they are unreactive.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.06", "question": "State four differences between an alkali metal and a transition metal such as nickel.", "answer": "(1) Alkali metals are soft; transition metals are hard and strong. (2) Alkali metals have low density; transition metals have high density. (3) Alkali metals have low melting points; transition metals have high melting points. (4) Alkali metals are very reactive (react with water); transition metals are much less reactive.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.07", "question": "Which phrase completes: &quot;All transition metals in their compounds...&quot; (A) are white in colour, (B) are magnetic, (C) form ions of the type M\u00b2\u207a and M\u00b3\u207a, (D) often act as catalysts.", "answer": "(C) form ions of the type M\u00b2\u207a and M\u00b3\u207a \u2014 this describes their variable oxidation states. Note: (D) is also a distinctive property of transition metals, but the question says &quot;all ... in their compounds&quot; \u2014 variable oxidation states is the most accurate general statement about their compounds.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.08", "question": "Explain why elements in the same group of the Periodic Table have similar chemical properties.", "answer": "Elements in the same group have the same number of electrons in their outer shell. Since it is the outer-shell electrons that are mainly responsible for chemical reactions (bonding, losing or gaining electrons), elements with the same outer-shell configuration react in similar ways.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.09", "question": "Describe the trend in reactivity going down (a) Group I and (b) Group VII. Explain each trend.", "answer": "(a) In Group I, reactivity increases down the group. As atoms get larger, the outer electron is further from the nucleus and more shielded by inner shells, making it easier to lose \u2014 so the metal reacts more vigorously. (b) In Group VII, reactivity decreases down the group. As atoms get larger, the outer shell is further from the nucleus, making it harder to attract an extra electron to complete the shell \u2014 so the non-metal reacts less vigorously.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.10", "question": "The figure shows an outline of the Periodic Table with elements V, W, X, Y marked. V is in Group I Period 4, Y is in Group II Period 4, W is a transition element, X is in Group VII Period 3. Identify which combination is a metal and a non-metal.", "answer": "X is in Group VII (a non-metal/halogen) and Y is in Group II (a metal/alkaline earth). So the correct answer is: Non-metal = X, Metal = Y. V is also a metal (Group I). W is a transition metal.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.11", "question": "Identify which combination shows the order of increasing reactivity in Group I and Group VII.", "answer": "Group I: reactivity increases going down, so Li \u2192 Cs (least to most reactive). Group VII: reactivity increases going up, so I \u2192 F (least to most reactive). The correct combination is: Group I = Li \u2192 Cs, Group VII = I \u2192 F (Answer B).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.12", "question": "From a table of Group I and Group VII elements (Li, Na, K, Cl, Br, I), identify: (a) a solid Group VII element, (b) the Group I element with the lowest density, (c) an element that is a liquid at room temperature, (d) the two elements that would react most violently with each other.", "answer": "(a) Iodine \u2014 it is a grey-black solid at room temperature. (b) Lithium \u2014 density 0.53 g/cm\u00b3 (it actually floats on water). (c) Bromine \u2014 it is a red-brown liquid at room temperature. (d) Potassium and chlorine \u2014 potassium is the most reactive Group I element listed, and chlorine is the most reactive Group VII element listed, so they would react most violently together.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.13", "question": "(a) State whether transition elements have high or low densities. (b) State whether transition elements are all gases or all metals. (c) Give the name of the group that includes helium, neon, and argon.", "answer": "(a) Transition elements have high densities. (b) They are all metals. (c) The noble gases (Group VIII / Group 0).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.14", "question": "Describe the change in character of elements across a period from left to right.", "answer": "Elements change from metallic character on the left to non-metallic character on the right. The elements on the far left (Group I) are highly reactive metals, those in the middle are transition metals, the metalloids are near the boundary, and the elements on the far right (Group VII) are reactive non-metals, with Group VIII being unreactive noble gases.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.15", "question": "Explain why chlorine can displace bromine from potassium bromide solution but iodine cannot.", "answer": "Chlorine is more reactive than bromine (higher in Group VII, so its atoms can more easily attract an extra electron). Therefore chlorine can displace the less reactive bromine: Cl\u2082 + 2KBr \u2192 2KCl + Br\u2082. Iodine is less reactive than bromine (lower in Group VII), so it cannot displace bromine \u2014 a less reactive halogen cannot displace a more reactive one.", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.16", "question": "Predict two properties you would expect the element rubidium (Group I, Period 5) to have, based on its position in the Periodic Table.", "answer": "(1) Rubidium will be a very soft metal that can be cut with a knife (softer than potassium). (2) Rubidium will react very vigorously/explosively with water to form rubidium hydroxide and hydrogen, more vigorously than potassium (reactivity increases down Group I).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.17", "question": "Name three distinctive properties of transition metals that are NOT shared by Group I metals.", "answer": "(1) Transition metals form coloured compounds (e.g. blue copper sulfate, green iron(II) chloride). (2) Transition metals have variable oxidation states (e.g. Fe\u00b2\u207a and Fe\u00b3\u207a). (3) Transition metals and their compounds often act as catalysts (e.g. iron in the Haber process, platinum in catalytic converters).", "marks": 2, "hasImage": false, "imagePath": null}, {"id": "Question C8.18", "question": "Explain why the noble gases are unreactive.", "answer": "Noble gases have a complete outer shell of electrons (2 for helium, 8 for all others). This arrangement is energetically very stable. Because the outer shell is full, noble gas atoms have no tendency to gain, lose, or share electrons, so they do not form bonds or take part in chemical reactions.\n\n---\n\n## 9. Exam Focus Priorities (Ranked by Frequency)\n\n1. Group I trends and reactions \u2014 reactivity increases down the group; reaction with water produces metal hydroxide + hydrogen; linking trends to atomic structure (outer electron further from nucleus).\n2. Group VII trends and displacement \u2014 reactivity decreases down the group; halogen displacement reactions with halide solutions; writing equations.\n3. Electronic configuration and position \u2014 using group number (= outer electrons) and period nu", "marks": 2, "hasImage": false, "imagePath": null}], "totalMarks": 36};
+let timerInterval = null;
+let secondsLeft = 0;
+let startTime = null;
+
+document.getElementById('totalQ').textContent = EXAM.questions.length;
+document.getElementById('totalM').textContent = EXAM.totalMarks;
+document.getElementById('timeLimit').textContent = EXAM.timeMinutes;
+
+function startExam() {
+  document.getElementById('btnStart').classList.add('hidden');
+  document.getElementById('questionsArea').classList.remove('hidden');
+  document.getElementById('submitArea').classList.remove('hidden');
+  secondsLeft = EXAM.timeMinutes * 60;
+  startTime = Date.now();
+  renderQuestions();
+  timerInterval = setInterval(tick, 1000);
+  tick();
+}
+
+function tick() {
+  secondsLeft--;
+  const m = Math.floor(secondsLeft / 60);
+  const s = secondsLeft % 60;
+  const el = document.getElementById('timer');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className = 'timer' + (secondsLeft < 300 ? (secondsLeft < 60 ? ' danger' : ' warning') : '');
+  if (secondsLeft <= 0) { clearInterval(timerInterval); submitExam(); }
+}
+
+function renderQuestions() {
+  const area = document.getElementById('questionsArea');
+  area.innerHTML = '';
+  EXAM.questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'q-card';
+    div.innerHTML = `
+      <div class="q-header">
+        <span class="q-num">Question ${i+1} — ${q.id}</span>
+        <span class="q-marks">[${q.marks} marks]</span>
+      </div>
+      <div class="q-text">${q.question}</div>
+      <textarea id="ans_${i}" placeholder="Write your answer here..."></textarea>
+      <div class="answer-reveal" id="reveal_${i}"><b>Model Answer:</b><br>${q.answer}</div>
+    `;
+    area.appendChild(div);
+  });
+}
+
+function submitExam() {
+  clearInterval(timerInterval);
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+
+  document.getElementById('submitArea').classList.add('hidden');
+  document.querySelectorAll('.answer-reveal').forEach(el => el.classList.add('show'));
+  document.querySelectorAll('textarea').forEach(el => el.disabled = true);
+  document.getElementById('timer').textContent = 'DONE';
+  document.getElementById('timer').className = 'timer';
+
+  const results = document.getElementById('resultsArea');
+  results.classList.remove('hidden');
+  results.innerHTML = `
+    <div class="results">
+      <h2>Exam Complete</h2>
+      <div class="time-taken">Time taken: ${m}m ${s}s</div>
+      <p style="margin-top:12px;color:#555;">Model answers shown below each question. Review your responses.</p>
+    </div>
+  `;
+
+  try {
+    const sessions = JSON.parse(localStorage.getItem('sf_exam_sessions') || '[]');
+    sessions.push({ date: new Date().toISOString(), questions: EXAM.questions.length, totalMarks: EXAM.totalMarks, timeSec: elapsed });
+    localStorage.setItem('sf_exam_sessions', JSON.stringify(sessions));
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

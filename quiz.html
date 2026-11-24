@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C8 — The Periodic Table — Interactive Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, 'Helvetica Neue', sans-serif;
+    background: #f5f7fa;
+    color: #1a1a1a;
+    line-height: 1.6;
+  }
+  .header {
+    background: #1a3c5e;
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 24px; margin-bottom: 4px; }
+  .header p { opacity: 0.8; font-size: 14px; }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  .progress-bar {
+    background: #e0e0e0;
+    border-radius: 8px;
+    height: 8px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    background: #2a5f8f;
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 8px;
+  }
+  .score-display {
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 16px;
+  }
+  .question-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: none;
+  }
+  .question-card.active { display: block; }
+  .question-card .q-number {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .question-card .q-type {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a3c5e;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .question-card .q-text {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .option:hover { border-color: #2a5f8f; background: #f0f4ff; }
+  .option.selected { border-color: #2a5f8f; background: #e8f0fe; }
+  .option.correct { border-color: #2d8a4e; background: #e8f5e9; }
+  .option.wrong { border-color: #c62828; background: #ffebee; }
+  .option:disabled { cursor: default; opacity: 0.85; }
+  .tf-btns { display: flex; gap: 12px; }
+  .tf-btns button {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s;
+  }
+  .tf-btns button:hover { border-color: #2a5f8f; }
+  .tf-btns button.correct { border-color: #2d8a4e; background: #e8f5e9; }
+  .tf-btns button.wrong { border-color: #c62828; background: #ffebee; }
+  .freeform-area {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+  }
+  .explanation {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-left: 3px solid #2a5f8f;
+    border-radius: 4px;
+    font-size: 14px;
+    display: none;
+  }
+  .explanation.show { display: block; }
+  .nav-btns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  .nav-btns button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-next { background: #2a5f8f; color: white; }
+  .btn-next:hover { background: #1a3c5e; }
+  .btn-reveal { background: #e0e0e0; color: #333; }
+  .btn-reveal:hover { background: #d0d0d0; }
+  .results-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: none;
+  }
+  .results-card h2 { font-size: 28px; margin-bottom: 8px; }
+  .results-card .score-big {
+    font-size: 64px;
+    font-weight: 700;
+    color: #2a5f8f;
+    margin: 16px 0;
+  }
+  .results-card .grade { font-size: 18px; margin-bottom: 24px; }
+  .btn-restart {
+    padding: 12px 32px;
+    background: #2a5f8f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>C8 — The Periodic Table</h1>
+  <p>Interactive Study Quiz</p>
+</div>
+<div class="container">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="score-display" id="scoreDisplay">Question 1 of —</div>
+  <div id="questionsContainer"></div>
+  <div class="results-card" id="resultsCard">
+    <h2>Quiz Complete!</h2>
+    <div class="score-big" id="finalScore">0%</div>
+    <div class="grade" id="gradeText"></div>
+    <button class="btn-restart" onclick="restart()">Try Again</button>
+  </div>
+</div>
+<script>
+const DATA = {"title": "C8 \u2014 The Periodic Table", "mcq": [{"id": "term_0", "type": "mcq", "question": "What is the definition of <b>Periodic Table</b>?", "options": ["The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "A property that shows a repeating pattern across the periods of the Periodic Table", "A substance that speeds up a chemical reaction without being used up itself", "A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)"], "correct": 3, "explanation": "A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)"}, {"id": "term_1", "type": "mcq", "question": "What is the definition of <b>Group</b>?", "options": ["A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)", "A vertical column in the Periodic Table; elements in the same group have the same number of outer electrons and similar chemical properties", "A molecule consisting of two atoms bonded together (e.g. Cl\u2082, Br\u2082, I\u2082, H\u2082, O\u2082)", "The block of metals in the centre of the Periodic Table; they are hard, dense, have high melting points, form coloured compounds, and act as catalysts"], "correct": 1, "explanation": "A vertical column in the Periodic Table; elements in the same group have the same number of outer electrons and similar chemical properties"}, {"id": "term_2", "type": "mcq", "question": "What is the definition of <b>Period</b>?", "options": ["A horizontal row in the Periodic Table; the period number equals the number of electron shells", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)", "The block of metals in the centre of the Periodic Table; they are hard, dense, have high melting points, form coloured compounds, and act as catalysts", "Compounds formed by halogens with metals or hydrogen (e.g. NaCl, HBr, KI)"], "correct": 0, "explanation": "A horizontal row in the Periodic Table; the period number equals the number of electron shells"}, {"id": "term_3", "type": "mcq", "question": "What is the definition of <b>Alkali metals</b>?", "options": ["A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)", "The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)", "A vertical column in the Periodic Table; elements in the same group have the same number of outer electrons and similar chemical properties"], "correct": 1, "explanation": "The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions"}, {"id": "term_4", "type": "mcq", "question": "What is the definition of <b>Halogens</b>?", "options": ["The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules", "The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells", "A molecule consisting of two atoms bonded together (e.g. Cl\u2082, Br\u2082, I\u2082, H\u2082, O\u2082)", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)"], "correct": 0, "explanation": "The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules"}, {"id": "term_5", "type": "mcq", "question": "What is the definition of <b>Halides</b>?", "options": ["The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells", "Compounds formed by halogens with metals or hydrogen (e.g. NaCl, HBr, KI)", "Existing as single atoms (not bonded into molecules); noble gases are monatomic", "A molecule consisting of two atoms bonded together (e.g. Cl\u2082, Br\u2082, I\u2082, H\u2082, O\u2082)"], "correct": 1, "explanation": "Compounds formed by halogens with metals or hydrogen (e.g. NaCl, HBr, KI)"}, {"id": "term_6", "type": "mcq", "question": "What is the definition of <b>Noble gases</b>?", "options": ["The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "The combining power of an atom; halogens have a valency of 1", "A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)", "The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells"], "correct": 3, "explanation": "The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells"}, {"id": "term_7", "type": "mcq", "question": "What is the definition of <b>Transition elements</b>?", "options": ["The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)", "The block of metals in the centre of the Periodic Table; they are hard, dense, have high melting points, form coloured compounds, and act as catalysts", "The combining power of an atom; halogens have a valency of 1"], "correct": 2, "explanation": "The block of metals in the centre of the Periodic Table; they are hard, dense, have high melting points, form coloured compounds, and act as catalysts"}, {"id": "term_8", "type": "mcq", "question": "What is the definition of <b>Metalloid (semi-metal)</b>?", "options": ["The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules", "A reaction where a more reactive element replaces a less reactive element in a compound", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)"], "correct": 3, "explanation": "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)"}, {"id": "term_9", "type": "mcq", "question": "What is the definition of <b>Displacement reaction</b>?", "options": ["The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells", "A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)", "The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "A reaction where a more reactive element replaces a less reactive element in a compound"], "correct": 3, "explanation": "A reaction where a more reactive element replaces a less reactive element in a compound"}, {"id": "term_10", "type": "mcq", "question": "What is the definition of <b>Diatomic molecule</b>?", "options": ["A molecule consisting of two atoms bonded together (e.g. Cl\u2082, Br\u2082, I\u2082, H\u2082, O\u2082)", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)", "The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules", "A table of elements arranged in order of increasing atomic number, with elements of similar properties in vertical columns (groups)"], "correct": 0, "explanation": "A molecule consisting of two atoms bonded together (e.g. Cl\u2082, Br\u2082, I\u2082, H\u2082, O\u2082)"}, {"id": "term_11", "type": "mcq", "question": "What is the definition of <b>Monatomic</b>?", "options": ["The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules", "The combining power of an atom; halogens have a valency of 1", "The very unreactive elements in Group VIII (He, Ne, Ar, Kr, Xe, Rn); they have complete outer electron shells", "Existing as single atoms (not bonded into molecules); noble gases are monatomic"], "correct": 3, "explanation": "Existing as single atoms (not bonded into molecules); noble gases are monatomic"}, {"id": "term_12", "type": "mcq", "question": "What is the definition of <b>Periodic property</b>?", "options": ["Existing as single atoms (not bonded into molecules); noble gases are monatomic", "A property that shows a repeating pattern across the periods of the Periodic Table", "The block of metals in the centre of the Periodic Table; they are hard, dense, have high melting points, form coloured compounds, and act as catalysts", "The reactive non-metals in Group VII (F, Cl, Br, I); they exist as diatomic molecules"], "correct": 1, "explanation": "A property that shows a repeating pattern across the periods of the Periodic Table"}, {"id": "term_13", "type": "mcq", "question": "What is the definition of <b>Electronic configuration</b>?", "options": ["A vertical column in the Periodic Table; elements in the same group have the same number of outer electrons and similar chemical properties", "Existing as single atoms (not bonded into molecules); noble gases are monatomic", "The arrangement of electrons in shells around the nucleus of an atom (e.g. 2,8,1 for sodium)", "An element with properties between metals and non-metals; they are semiconductors (e.g. silicon, germanium)"], "correct": 2, "explanation": "The arrangement of electrons in shells around the nucleus of an atom (e.g. 2,8,1 for sodium)"}, {"id": "term_14", "type": "mcq", "question": "What is the definition of <b>Catalyst</b>?", "options": ["A substance that speeds up a chemical reaction without being used up itself", "A horizontal row in the Periodic Table; the period number equals the number of electron shells", "The highly reactive metals in Group I (Li, Na, K, Rb, Cs); they react with water to form alkaline solutions", "A property that shows a repeating pattern across the periods of the Periodic Table"], "correct": 0, "explanation": "A substance that speeds up a chemical reaction without being used up itself"}, {"id": "term_15", "type": "mcq", "question": "What is the definition of <b>Valency</b>?", "options": ["The combining power of an atom; halogens have a valency of 1", "A property that shows a repeating pattern across the periods of the Periodic Table", "The arrangement of electrons in shells around the nucleus of an atom (e.g. 2,8,1 for sodium)", "A vertical column in the Periodic Table; elements in the same group have the same number of outer electrons and similar chemical properties"], "correct": 0, "explanation": "The combining power of an atom; halogens have a valency of 1"}], "freeform": [{"id": "qa_0", "type": "freeform", "question": "What is the name of the alkali formed when potassium reacts with water?", "answer": "Potassium hydroxide (KOH).", "marks": null}, {"id": "qa_1", "type": "freeform", "question": "Write a word equation for the reaction between lithium and water.", "answer": "lithium + water \u2192 lithium hydroxide + hydrogen", "marks": null}, {"id": "qa_2", "type": "freeform", "question": "Which halogen(s) will displace bromine from a solution of potassium bromide?", "answer": "Only chlorine (and fluorine) will displace bromine, because they are more reactive. Iodine will NOT displace bromine because it is less reactive. Cl\u2082(aq) + 2KBr(aq) \u2192 2KCl(aq) + Br\u2082(aq).", "marks": null}, {"id": "qa_3", "type": "freeform", "question": "What is the similarity in the electron arrangement of the noble gases?", "answer": "All noble gases have a complete (full) outer shell of electrons. Helium has 2 electrons in its outer shell; all others (Ne, Ar, Kr, Xe, Rn) have 8 electrons in their outer shell. This stable configuration is why they are unreactive.", "marks": null}, {"id": "qa_4", "type": "freeform", "question": "Which phrase completes: &quot;All transition metals in their compounds...&quot; (A) are white in colour, (B) are magnetic, (C) form ions of the type M\u00b2\u207a and M\u00b3\u207a, (D) often act as catalysts.", "answer": "(C) form ions of the type M\u00b2\u207a and M\u00b3\u207a \u2014 this describes their variable oxidation states. Note: (D) is also a distinctive property of transition metals, but the question says &quot;all ... in their compounds&quot; \u2014 variable oxidation states is the most accurate general statement about their compounds.", "marks": null}, {"id": "qa_5", "type": "freeform", "question": "Explain why elements in the same group of the Periodic Table have similar chemical properties.", "answer": "Elements in the same group have the same number of electrons in their outer shell. Since it is the outer-shell electrons that are mainly responsible for chemical reactions (bonding, losing or gaining electrons), elements with the same outer-shell configuration react in similar ways.", "marks": null}, {"id": "qa_6", "type": "freeform", "question": "The figure shows an outline of the Periodic Table with elements V, W, X, Y marked. V is in Group I Period 4, Y is in Group II Period 4, W is a transition element, X is in Group VII Period 3. Identify which combination is a metal and a non-metal.", "answer": "X is in Group VII (a non-metal/halogen) and Y is in Group II (a metal/alkaline earth). So the correct answer is: Non-metal = X, Metal = Y. V is also a metal (Group I). W is a transition metal.", "marks": null}, {"id": "qa_7", "type": "freeform", "question": "Identify which combination shows the order of increasing reactivity in Group I and Group VII.", "answer": "Group I: reactivity increases going down, so Li \u2192 Cs (least to most reactive). Group VII: reactivity increases going up, so I \u2192 F (least to most reactive). The correct combination is: Group I = Li \u2192 Cs, Group VII = I \u2192 F (Answer B).", "marks": null}, {"id": "qa_8", "type": "freeform", "question": "(a) State whether transition elements have high or low densities. (b) State whether transition elements are all gases or all metals. (c) Give the name of the group that includes helium, neon, and argon.", "answer": "(a) Transition elements have high densities. (b) They are all metals. (c) The noble gases (Group VIII / Group 0).", "marks": null}, {"id": "qa_9", "type": "freeform", "question": "Predict two properties you would expect the element rubidium (Group I, Period 5) to have, based on its position in the Periodic Table.", "answer": "(1) Rubidium will be a very soft metal that can be cut with a knife (softer than potassium). (2) Rubidium will react very vigorously/explosively with water to form rubidium hydroxide and hydrogen, more vigorously than potassium (reactivity increases down Group I).", "marks": null}], "truefalse": [{"id": "tf_0", "type": "truefalse", "statement": "Major regions of the Periodic Table:", "correct": true, "explanation": "Major regions of the Periodic Table:"}, {"id": "tf_1", "type": "truefalse", "statement": "Metals are found on the left and centre of the Periodic Table.", "correct": true, "explanation": "Metals are found on the left and centre of the Periodic Table."}, {"id": "tf_2", "type": "truefalse", "statement": "Non-metals are grouped in the top right-hand region, above the thick stepped line.", "correct": true, "explanation": "Non-metals are grouped in the top right-hand region, above the thick stepped line."}, {"id": "tf_3", "type": "truefalse", "statement": "Metalloids have properties of both metals and non-metals:", "correct": true, "explanation": "Metalloids have properties of both metals and non-metals:"}, {"id": "tf_4", "type": "truefalse", "statement": "Group number = number of electrons in the outer shell (for main-group elements).", "correct": true, "explanation": "Group number = number of electrons in the outer shell (for main-group elements)."}, {"id": "tf_5", "type": "truefalse", "statement": "Period number = number of electron shells the atom has.", "correct": true, "explanation": "Period number = number of electron shells the atom has."}, {"id": "tf_6", "type": "truefalse", "statement": "Why elements in the same group have similar properties:", "correct": true, "explanation": "Why elements in the same group have similar properties:"}, {"id": "tf_7", "type": "truefalse", "statement": "Across a period (left to right):", "correct": true, "explanation": "Across a period (left to right):"}, {"id": "tf_8", "type": "truefalse", "statement": "Densities and melting points increase down any group (general trend).", "correct": true, "explanation": "Densities and melting points increase down any group (general trend)."}, {"id": "tf_9", "type": "truefalse", "statement": "Trends down Group I (physical):", "correct": true, "explanation": "Trends down Group I (physical):"}, {"id": "tf_10", "type": "truefalse", "statement": "Example \u2014 sodium with water:", "correct": true, "explanation": "Example \u2014 sodium with water:"}, {"id": "tf_11", "type": "truefalse", "statement": "Trend: Chemical reactivity increases down the group:", "correct": true, "explanation": "Trend: Chemical reactivity increases down the group:"}, {"id": "tf_12", "type": "truefalse", "statement": "Why reactivity increases down the group:", "correct": true, "explanation": "Why reactivity increases down the group:"}, {"id": "tf_13", "type": "truefalse", "statement": "Common properties of all halogens:", "correct": true, "explanation": "Common properties of all halogens:"}, {"id": "tf_14", "type": "truefalse", "statement": "Trends down Group VII (physical):", "correct": true, "explanation": "Trends down Group VII (physical):"}]};
+let allQ = [];
+let idx = 0;
+let score = 0;
+let answered = 0;
+
+function init() {
+  allQ = [...(DATA.mcq||[]), ...(DATA.truefalse||[]), ...(DATA.freeform||[])];
+  if (!allQ.length) { document.getElementById('scoreDisplay').textContent = 'No questions available.'; return; }
+  idx = 0; score = 0; answered = 0;
+  renderAll();
+  showQuestion(0);
+}
+
+function renderAll() {
+  const c = document.getElementById('questionsContainer');
+  c.innerHTML = '';
+  allQ.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = 'q_' + i;
+
+    let typeLabel = q.type === 'mcq' ? 'Multiple Choice' : q.type === 'truefalse' ? 'True / False' : 'Written Answer';
+    let inner = `<div class="q-number">Question ${i+1} of ${allQ.length}</div>`;
+    inner += `<span class="q-type">${typeLabel}</span>`;
+
+    if (q.type === 'mcq') {
+      inner += `<div class="q-text">${q.question}</div>`;
+      q.options.forEach((o, oi) => {
+        inner += `<button class="option" data-qi="${i}" data-oi="${oi}" onclick="answerMCQ(${i},${oi})">${o}</button>`;
+      });
+      inner += `<div class="explanation" id="expl_${i}">${q.explanation||''}</div>`;
+    } else if (q.type === 'truefalse') {
+      inner += `<div class="q-text">${q.statement}</div>`;
+      inner += `<div class="tf-btns"><button data-qi="${i}" data-val="true" onclick="answerTF(${i},true)">True</button>`;
+      inner += `<button data-qi="${i}" data-val="false" onclick="answerTF(${i},false)">False</button></div>`;
+      inner += `<div class="explanation" id="expl_${i}">Correct statement: ${q.explanation||''}</div>`;
+    } else {
+      inner += `<div class="q-text">${q.question}</div>`;
+      inner += `<textarea class="freeform-area" id="ans_${i}" placeholder="Type your answer..."></textarea>`;
+      inner += `<div class="explanation" id="expl_${i}"><b>Model answer:</b> ${q.answer||''}</div>`;
+    }
+
+    inner += `<div class="nav-btns">`;
+    if (q.type === 'freeform') inner += `<button class="btn-reveal" onclick="revealFreeform(${i})">Show Answer</button>`;
+    else inner += `<span></span>`;
+    inner += `<button class="btn-next" id="next_${i}" onclick="nextQ()">${i===allQ.length-1?'Finish':'Next →'}</button>`;
+    inner += `</div>`;
+
+    card.innerHTML = inner;
+    c.appendChild(card);
+  });
+}
+
+function showQuestion(n) {
+  document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('q_' + n);
+  if (card) card.classList.add('active');
+  document.getElementById('progressFill').style.width = ((n+1)/allQ.length*100) + '%';
+  document.getElementById('scoreDisplay').textContent = `Question ${n+1} of ${allQ.length} · Score: ${score}/${answered}`;
+}
+
+function answerMCQ(qi, oi) {
+  const q = allQ[qi];
+  const btns = document.querySelectorAll(`button[data-qi="${qi}"]`);
+  btns.forEach(b => { b.disabled = true; b.classList.remove('selected'); });
+  btns[oi].classList.add('selected');
+  if (oi === q.correct) { btns[oi].classList.add('correct'); score++; }
+  else { btns[oi].classList.add('wrong'); btns[q.correct].classList.add('correct'); }
+  answered++;
+  document.getElementById('expl_' + qi).classList.add('show');
+  document.getElementById('scoreDisplay').textContent = `Question ${qi+1} of ${allQ.length} · Score: ${score}/${answered}`;
+}
+
+function answerTF(qi, val) {
+  const q = allQ[qi];
+  const btns = document.querySelectorAll(`button[data-qi="${qi}"]`);
+  btns.forEach(b => b.disabled = true);
+  const correct = val === q.correct;
+  btns.forEach(b => {
+    if (String(b.dataset.val) === String(q.correct)) b.classList.add('correct');
+    if (b.dataset.val === String(val) && !correct) b.classList.add('wrong');
+  });
+  if (correct) score++;
+  answered++;
+  document.getElementById('expl_' + qi).classList.add('show');
+  document.getElementById('scoreDisplay').textContent = `Question ${qi+1} of ${allQ.length} · Score: ${score}/${answered}`;
+}
+
+function revealFreeform(qi) {
+  document.getElementById('expl_' + qi).classList.add('show');
+  answered++;
+  document.getElementById('scoreDisplay').textContent = `Question ${qi+1} of ${allQ.length} · Score: ${score}/${answered}`;
+}
+
+function nextQ() {
+  idx++;
+  if (idx >= allQ.length) { showResults(); return; }
+  showQuestion(idx);
+}
+
+function showResults() {
+  document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+  const pct = answered > 0 ? Math.round(score/answered*100) : 0;
+  document.getElementById('finalScore').textContent = pct + '%';
+  let grade = pct >= 90 ? 'Outstanding!' : pct >= 70 ? 'Great work!' : pct >= 50 ? 'Good effort — keep studying!' : 'Review the material and try again.';
+  document.getElementById('gradeText').textContent = grade + ` (${score}/${answered} correct)`;
+  document.getElementById('resultsCard').style.display = 'block';
+  document.getElementById('progressFill').style.width = '100%';
+  // Save to localStorage for dashboard
+  try {
+    const sessions = JSON.parse(localStorage.getItem('sf_quiz_sessions') || '[]');
+    sessions.push({ date: new Date().toISOString(), score, total: answered, pct });
+    localStorage.setItem('sf_quiz_sessions', JSON.stringify(sessions));
+  } catch(e) {}
+}
+
+function restart() {
+  document.getElementById('resultsCard').style.display = 'none';
+  init();
+}
+
+init();
+</script>
+</body>
+</html>
